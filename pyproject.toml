@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "positional_embeddings_pytorch"
+version = "0.0.1"
+description = "A collection of positional embeddings (or positional encodings) written in pytorch."
+authors = ["wusuowei60 <quym@foxmail.com>"]
+license = "MIT License"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+torch = "^1.10.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
