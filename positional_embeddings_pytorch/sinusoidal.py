@@ -6,8 +6,6 @@ import math
 from typing import Optional
 
 import torch
-import torch.onnx.operators
-from torch import nn
 
 from .base import PositionalEmbedding
 
@@ -76,7 +74,7 @@ class SinusoidalPositionalEmbedding(PositionalEmbedding):
         )
 
     def forward_input(self, positions, input_):
-        return self(positions)
+        return self(positions) + input_
 
-    def forward_attn(self, positions, q, k):
-        pass
+    def forward_attn(self, q, k, positions_q, positions_k):
+        return torch.einsum("bhqd,bhkd->bhqk", q, k)

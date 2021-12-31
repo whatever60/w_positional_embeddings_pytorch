@@ -4,8 +4,9 @@ https://github.com/huggingface/transformers/blob/v4.15.0/src/transformers/models
 """
 
 import math
+
 import torch
-import torch.nn as nn
+from torch import nn
 
 from .base import PositionalEmbedding
 
@@ -121,7 +122,7 @@ class T5PositionalEmbedding(PositionalEmbedding):
         return attn_bias + attn
 
     def forward_input(self, positions, input_):
-        pass
+        return input_
 
     def forward_attn(self, q, k, positions_q, positions_k):
         return self(q, k)  # shape (1, num_heads, qlen, klen)

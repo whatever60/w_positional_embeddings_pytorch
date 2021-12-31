@@ -2,9 +2,8 @@
 https://github.com/pytorch/fairseq/blob/main/fairseq/modules/learned_positional_embedding.py
 """
 
-
 import torch
-import torch.nn as nn
+from torch import nn
 import torch.nn.functional as F
 
 from .base import PositionalEmbedding
@@ -65,7 +64,7 @@ class LearnedPositionalEmbedding(PositionalEmbedding):
         )
     
     def forward_input(self, positions, input_):
-        return self(positions)
+        return self(positions) + input_
 
-    def forward_attn(self, positions, q, k):
-        pass
+    def forward_attn(self, q, k, positions_q, positions_k):
+        return torch.einsum("bhqd, bhkd -> bhqk", q, k)

@@ -67,7 +67,7 @@ class TransformerXLPositionalEmbedding(PositionalEmbedding):
         return x
 
     def forward_input(self, positions, input_):
-        pass
+        return input_
 
     def forward_attn(self, q, k, positions_q, positions_k):
         positions = torch.arange(

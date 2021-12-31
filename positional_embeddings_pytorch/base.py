@@ -44,7 +44,7 @@ class PositionalEmbedding(nn.Module):
         k: torch.Tensor,
         positions_q: torch.Tensor,
         positions_k: torch.Tensor,
-    ) -> Optional[torch.Tensor]:
+    ) -> torch.Tensor:
         # q: [batch_size, num_heads, q_len, head_dim]
         # k: [batch_size, num_heads, k_len, head_dim]
         # positions_q: [batch_size, q_len]
@@ -55,7 +55,7 @@ class PositionalEmbedding(nn.Module):
 
     def forward_input(
         self, positions: torch.Tensor, input_: torch.Tensor
-    ) -> Optional[torch.Tensor]:
+    ) -> torch.Tensor:
         # positions: [batch_size, seq_len], for absolute positional embedding
         # input_: [batch_size, seq_len, embed_dim]
 

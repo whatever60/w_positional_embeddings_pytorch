@@ -66,7 +66,7 @@ class EnformerPositionalEmbedding(PositionalEmbedding):
         self.feature_size = num_heads * head_dim // self.pos_embed_components
 
     def forward_input(self, positions, input_):
-        pass
+        return input_
 
     def forward_attn(self, q, k, positions_q, positions_k):
         pe_index = torch.arange(k.shape[-2], device=k.device, dtype=torch.long)

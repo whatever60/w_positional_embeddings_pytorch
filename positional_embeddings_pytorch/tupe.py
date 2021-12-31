@@ -47,7 +47,7 @@ def relative_position_bucket(
 
 
 # this is from TUPE
-class TUPE(PositionalEmbedding):
+class UnifiedPositionalEmbedding(PositionalEmbedding):
     def __init__(
         self,
         *,
@@ -147,6 +147,7 @@ class TUPE(PositionalEmbedding):
         if self.rel_pos_embed:
             rel_pos_embed_bucket = self.rel_pos_embed_bucket[:seq_len, :seq_len]
             rel_pos_embed_bucket = relative_position_bucket(
+                relative_position=relative_position,
                 max_length=self.max_length,
                 num_buckets=self.num_buckets,
                 max_distance=self.max_distance,
@@ -198,7 +199,7 @@ class TUPE(PositionalEmbedding):
         return attn_bias + attn
 
     def forward_input(self, positions, input_):
-        pass
-
+        return input_
+        
     def forward_attn(self, q, k, positions_q, positions_k):
         return self(q, k)  # shape (1, num_heads, qlen, klen)
