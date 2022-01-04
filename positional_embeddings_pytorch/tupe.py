@@ -56,7 +56,7 @@ class UnifiedPositionalEmbedding(PositionalEmbedding):
         max_length: int,
         dropout_p: float,
         has_cls_token: bool = False,
-        rel_pos_embed: bool,
+        rel_pos_embed: bool = True,
         num_buckets: int = 32,
         max_distance: int = 128,
         pos_scale_factor: Optional[int] = 1,
@@ -69,9 +69,6 @@ class UnifiedPositionalEmbedding(PositionalEmbedding):
             padding_idx=None,
             dropout_p=dropout_p,
         )
-        self.embed_dim = embed_dim
-        self.num_heads = num_heads
-        self.max_length = max_length
         self.scaling = (embed_dim / num_heads * pos_scale_factor) ** -0.5
 
         assert has_cls_token == False, "CLS token is currently not supported"
@@ -141,7 +138,7 @@ class UnifiedPositionalEmbedding(PositionalEmbedding):
                 pos_embed[:, 0, :] = cls_2_others.unsqueeze(-1)
                 pos_embed[:, :, 0] = others_2_cls.unsqueeze(-1)
             seq_len -= 1
-        
+
         # ==== relative position embedding ====
         rel_pos_embed = torch.zeros_like(pos_embed)
         if self.rel_pos_embed:
@@ -198,8 +195,8 @@ class UnifiedPositionalEmbedding(PositionalEmbedding):
         attn_bias = self.compute_bias(relative_position, q.shape[0], qlen, klen)
         return attn_bias + attn
 
-    def forward_input(self, positions, input_):
+    def forward_input(self, input_, position):
         return input_
-        
+
     def forward_attn(self, q, k, positions_q, positions_k):
         return self(q, k)  # shape (1, num_heads, qlen, klen)

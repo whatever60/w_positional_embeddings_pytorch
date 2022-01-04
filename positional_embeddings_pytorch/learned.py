@@ -63,8 +63,8 @@ class LearnedPositionalEmbedding(PositionalEmbedding):
             self.sparse,
         )
     
-    def forward_input(self, positions, input_):
-        return self(positions) + input_
+    def forward_input(self, input_, position):
+        return self(position) + input_
 
     def forward_attn(self, q, k, positions_q, positions_k):
         return torch.einsum("bhqd, bhkd -> bhqk", q, k)

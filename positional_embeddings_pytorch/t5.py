@@ -121,7 +121,7 @@ class T5PositionalEmbedding(PositionalEmbedding):
         attn_bias = self.compute_bias(relative_position)
         return attn_bias + attn
 
-    def forward_input(self, positions, input_):
+    def forward_input(self, input_, position):
         return input_
 
     def forward_attn(self, q, k, positions_q, positions_k):

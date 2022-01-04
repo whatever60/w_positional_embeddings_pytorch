@@ -127,8 +127,10 @@ throwing it into your code. Instead, users are expected to have prior knowledge 
 
 - Positional embedding for decoder.
 - Positional embedding with memory.
+- Add support for \[CLS\] tokens.
 
-(Current implementation only considers transformer encoder without memory.)
+(Current implementation only considers transformer encoder without memory, and does not 
+support special tokens such as \[CLS\].)
 
 ## References
 

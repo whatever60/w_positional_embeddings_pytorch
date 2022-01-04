@@ -65,7 +65,7 @@ class EnformerPositionalEmbedding(PositionalEmbedding):
         #         f'embed_dim has to be divisible by {num_components}')
         self.feature_size = num_heads * head_dim // self.pos_embed_components
 
-    def forward_input(self, positions, input_):
+    def forward_input(self, input_, position):
         return input_
 
     def forward_attn(self, q, k, positions_q, positions_k):

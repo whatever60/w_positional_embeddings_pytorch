@@ -54,7 +54,7 @@ class PositionalEmbedding(nn.Module):
         raise NotImplementedError
 
     def forward_input(
-        self, positions: torch.Tensor, input_: torch.Tensor
+        self, input_: torch.Tensor, position: torch.Tensor
     ) -> torch.Tensor:
         # positions: [batch_size, seq_len], for absolute positional embedding
         # input_: [batch_size, seq_len, embed_dim]
