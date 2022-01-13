@@ -25,7 +25,7 @@ class PositionalEmbedding(nn.Module):
         embed_dim: Optional[int],
         num_heads: Optional[int],
         head_dim: Optional[int],
-        max_length: Optional[int],
+        max_pos: Optional[int],
         padding_idx: Optional[int],
         dropout_p: Optional[float],
     ):
@@ -34,9 +34,11 @@ class PositionalEmbedding(nn.Module):
         self.num_heads = num_heads
         self.head_dim = head_dim
         # self.scale = 1 / (head_dim ** 0.5) if head_dim is not None else None
-        self.max_length = max_length
+        self.max_pos = max_pos
         self.padding_idx = padding_idx
-        self.positional_embedding_dropout = nn.Dropout(dropout_p) if dropout_p else None
+        self.positional_embedding_dropout = (
+            nn.Dropout(dropout_p) if dropout_p is not None else None
+        )
 
     def forward_attn(
         self,

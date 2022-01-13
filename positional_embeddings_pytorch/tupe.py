@@ -51,8 +51,8 @@ class UnifiedPositionalEmbedding(PositionalEmbedding):
     def __init__(
         self,
         *,
-        embed_dim: int,
         num_heads: int,
+        head_dim: int,
         max_length: int,
         dropout_p: float,
         has_cls_token: bool = False,
@@ -62,22 +62,24 @@ class UnifiedPositionalEmbedding(PositionalEmbedding):
         pos_scale_factor: Optional[int] = 1,
     ) -> None:
         super().__init__(
-            embed_dim=embed_dim,
+            embed_dim=None,
             num_heads=num_heads,
-            head_dim=None,
+            head_dim=head_dim,
             max_length=max_length,
             padding_idx=None,
             dropout_p=dropout_p,
         )
-        self.scaling = (embed_dim / num_heads * pos_scale_factor) ** -0.5
+        self.scaling = (head_dim * pos_scale_factor) ** -0.5
 
         assert has_cls_token == False, "CLS token is currently not supported"
         self.has_cls_token = has_cls_token
         if self.has_cls_token:
             # make room for [CLS]-to-others and others-to-[CLS]
             self.max_length += 2
-        self.abs_pos_embed = nn.Parameter(torch.randn(self.max_length, self.embed_dim))
-        self.ln = nn.LayerNorm(self.embed_dim)
+        self.abs_pos_embed = nn.Parameter(
+            torch.randn(self.max_length, self.head_dim * self.num_heads)
+        )
+        self.ln = nn.LayerNorm(self.head_dim * self.num_heads)
         self.in_proj = nn.Linear(
             self.num_heads * self.head_dim, self.num_heads * self.head_dim * 2
         )
@@ -90,15 +92,24 @@ class UnifiedPositionalEmbedding(PositionalEmbedding):
             self.max_distance = max_distance
             self.rel_pos_embed = nn.Embedding(self.num_buckets + 1, self.num_heads)
 
+            context_pos = torch.arange(max_length, dtype=torch.long)[:, None]
+            memory_pos = torch.arange(max_length, dtype=torch.long)[None, :]
+            relative_pos = memory_pos - context_pos  # shape (qlen, klen)
+            self.rel_pos_embed_bucket = relative_position_bucket(
+                relative_position=relative_pos,
+                num_buckets=self.num_buckets,
+                max_distance=self.max_length,
+            )
+
     def compute_bias(
         self,
-        relative_position,
-        batch_size,
-        q_len,
-        k_len,
-        cls_token_index: Optional[None],
+        q,
+        k,
+        cls_token_index: Optional[Tensor] = None,
     ) -> Tensor:
         assert cls_token_index is None, "CLS token is currently not supported"
+        q_len, k_len = q.shape[-2], k.shape[-2]
+        batch_size = q.shape[0]
         seq_len = max(q_len, k_len)
         # 0 is for others-to-[CLS] 1 is for [CLS]-to-others
         # Assume the input is ordered. If your input token is permuted, you may need to update this accordingly
@@ -113,7 +124,7 @@ class UnifiedPositionalEmbedding(PositionalEmbedding):
             .reshape(seq_len, 2, self.num_heads, self.head_dim)
             .permute(1, 2, 0, 3)
         )
-        q, k = q[:q_len], k[:k_len]
+        q, k = q[:, :q_len], k[:, :k_len]
         q = q * self.scaling
         # [num_heads, q_len, k_len]
         pos_embed = torch.bmm(q, k.transpose(1, 2))
@@ -142,13 +153,7 @@ class UnifiedPositionalEmbedding(PositionalEmbedding):
         # ==== relative position embedding ====
         rel_pos_embed = torch.zeros_like(pos_embed)
         if self.rel_pos_embed:
-            rel_pos_embed_bucket = self.rel_pos_embed_bucket[:seq_len, :seq_len]
-            rel_pos_embed_bucket = relative_position_bucket(
-                relative_position=relative_position,
-                max_length=self.max_length,
-                num_buckets=self.num_buckets,
-                max_distance=self.max_distance,
-            )
+            rel_pos_embed_bucket = self.rel_pos_embed_bucket[:q_len, :k_len]
             if self.has_cls_token:
                 if cls_token_index is not None:
                     rel_pos_embed_bucket = rel_pos_embed_bucket.repeat(batch_size, 1, 1)
@@ -181,22 +186,13 @@ class UnifiedPositionalEmbedding(PositionalEmbedding):
         return self.positional_embedding_dropout(pos_embed)
 
     def forward(self, q, k):
-        qlen, klen = q.shape[-2], k.shape[-2]
-        context_position = torch.arange(
-            qlen, dtype=torch.long, device=self.relative_attention_bias.weight.device
-        )[:, None]
-        memory_position = torch.arange(
-            klen, dtype=torch.long, device=self.relative_attention_bias.weight.device
-        )[None, :]
-
         attn = torch.einsum("bhqd, bhkd -> bhqk", q, k)
-        relative_position = memory_position - context_position  # shape (qlen, klen)
         # [batch_size, num_heads, qlen, klen]
-        attn_bias = self.compute_bias(relative_position, q.shape[0], qlen, klen)
+        attn_bias = self.compute_bias(q, k)
         return attn_bias + attn
 
     def forward_input(self, input_, position):
         return input_
 
-    def forward_attn(self, q, k, positions_q, positions_k):
+    def forward_attn(self, q, k, position_q, position_k):
         return self(q, k)  # shape (1, num_heads, qlen, klen)

@@ -5,3 +5,4 @@ from .sinusoidal import SinusoidalPositionalEmbedding
 from .t5 import T5PositionalEmbedding
 from .transformer_xl import TransformerXLPositionalEmbedding
 from .tupe import UnifiedPositionalEmbedding
+from .tupe_dount import DountUnifiedPositionalEmbedding
